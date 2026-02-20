@@ -1,25 +1,23 @@
-package org.contacts.stage3.models;
+package org.contacts.stage4.models;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
-public abstract class Contact {
+public abstract class Contact implements Serializable {
+
     protected String number;
-    protected final boolean isPerson;
     protected LocalDateTime timeCreated;
     protected LocalDateTime timeLastEdit;
 
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final DateTimeFormatter formatter =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
-    protected Contact(boolean isPerson) {
-        this.isPerson = isPerson;
+    protected Contact() {
         this.timeCreated = LocalDateTime.now();
         this.timeLastEdit = LocalDateTime.now();
         this.number = "[no number]";
-    }
-
-    public boolean isPerson() {
-        return isPerson;
     }
 
     public void setNumber(String number) {
@@ -35,7 +33,6 @@ public abstract class Contact {
         this.timeLastEdit = LocalDateTime.now();
     }
 
-    // formatted getters
     public String getTimeCreated() {
         return timeCreated.format(formatter);
     }
@@ -44,6 +41,23 @@ public abstract class Contact {
         return timeLastEdit.format(formatter);
     }
 
-    public abstract String getTitle();   // for list()
-    public abstract void printInfo();    // for info
+    // 🔥 POLYMORPHISM METHODS (IMPORTANT)
+
+    // return editable fields like (name, surname, number)
+    public abstract List<String> getEditableFields();
+
+    // change field dynamically
+    public abstract void setField(String field, String value);
+
+    // get field value dynamically
+    public abstract String getField(String field);
+
+    // used for search (append all fields)
+    public abstract String getSearchText();
+
+    // for list()
+    public abstract String getTitle();
+
+    // for showing full info
+    public abstract void printInfo();
 }

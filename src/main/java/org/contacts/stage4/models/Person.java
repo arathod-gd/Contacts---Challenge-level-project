@@ -1,18 +1,75 @@
-package org.contacts.stage3.models;
+package org.contacts.stage4.models;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class Person extends Contact {
+
     private String name;
     private String surname;
     private String birthDate;
     private String gender;
 
     public Person(String name, String surname) {
-        super(true);
+        super();   // ✅ no boolean anymore
         this.name = name;
         this.surname = surname;
         this.birthDate = "[no data]";
         this.gender = "[no data]";
     }
+
+    // =========================
+    // Polymorphism Methods
+    // =========================
+
+    @Override
+    public List<String> getEditableFields() {
+        return Arrays.asList("name", "surname", "birth", "gender", "number");
+    }
+
+    @Override
+    public void setField(String field, String value) {
+        switch (field) {
+            case "name":
+                name = value;
+                break;
+            case "surname":
+                surname = value;
+                break;
+            case "birth":
+                birthDate = value;
+                break;
+            case "gender":
+                gender = value;
+                break;
+            case "number":
+                number = value;
+                break;
+        }
+        touch(); // ✅ update last edit time
+    }
+
+    @Override
+    public String getField(String field) {
+        return switch (field) {
+            case "name" -> name;
+            case "surname" -> surname;
+            case "birth" -> birthDate;
+            case "gender" -> gender;
+            case "number" -> number;
+            default -> "";
+        };
+    }
+
+    @Override
+    public String getSearchText() {
+        return (name + " " + surname + " " + birthDate + " " + gender + " " + number)
+                .toLowerCase();
+    }
+
+    // =========================
+    // Display Methods
+    // =========================
 
     @Override
     public String getTitle() {
@@ -28,37 +85,5 @@ public class Person extends Contact {
         System.out.println("Number: " + number);
         System.out.println("Time created: " + getTimeCreated());
         System.out.println("Time last edit: " + getTimeLastEdit());
-    }
-
-    public String getSurname() {
-        return surname;
-    }
-
-    public void setSurname(String surname) {
-        this.surname = surname;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getBirthDate() {
-        return birthDate;
-    }
-
-    public void setBirthDate(String birthDate) {
-        this.birthDate = birthDate;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
     }
 }

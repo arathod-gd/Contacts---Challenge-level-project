@@ -1,15 +1,30 @@
-package org.contacts.stage3.controller;
+package org.contacts.stage4.controller;
 
-import org.contacts.stage3.models.*;
-import org.contacts.stage3.service.ContactService;
+import org.contacts.stage4.models.Contact;
+import org.contacts.stage4.repository.ContactRepository;
+import org.contacts.stage4.service.ContactService;
 
 import java.util.List;
 import java.util.Scanner;
 
 public class ContactController {
 
-    private final ContactService service = new ContactService();
     private final Scanner sc = new Scanner(System.in);
+    private final ContactService service;
+
+    public ContactController(String fileName) {
+
+        ContactRepository repo =
+                fileName != null
+                        ? ContactRepository.loadFromFile(fileName)
+                        : new ContactRepository();
+
+        this.service = new ContactService(repo, fileName);
+    }
+
+    // =========================
+    // ADD
+    // =========================
 
     public void add() {
         System.out.print("Enter the type (person, organization): ");
@@ -20,149 +35,123 @@ public class ContactController {
         } else if (type.equalsIgnoreCase("organization")) {
             service.addOrganization(sc);
         } else {
-            System.out.println("Error! choose correct option..");
+            System.out.println("Invalid type.");
         }
     }
+
+    // =========================
+    // LIST
+    // =========================
 
     public void list() {
         List<Contact> list = service.list();
-        for (int i = 0; i < list.size(); i++) {
-            System.out.println((i + 1) + ". " + list.get(i).getTitle());
-        }
-        if (!list.isEmpty()) {
-            System.out.print("[list] Enter action ([number], back): ");
-            String action = sc.nextLine();
-            if (action.equals("back")) return;
-            try {
-                int idx = Integer.parseInt(action);
-                if (idx >= 1 && idx <= list.size()) recordMenu(service.getByIndex(idx));
-            } catch (NumberFormatException ignored) {}
-        }
-    }
 
-    public void info() {
-        List<Contact> list = service.list();
-        if (list.isEmpty()) {
-            System.out.println("No records found.");
-            return;
-        }
         for (int i = 0; i < list.size(); i++) {
             System.out.println((i + 1) + ". " + list.get(i).getTitle());
         }
+
+        if (list.isEmpty()) return;
+
         System.out.print("[list] Enter action ([number], back): ");
         String action = sc.nextLine();
+
         if (action.equalsIgnoreCase("back")) return;
+
         try {
             int idx = Integer.parseInt(action);
-            if (idx >= 1 && idx <= list.size()) {
-                recordMenu(list.get(idx - 1));  // directly show record menu
-            }
+            Contact c = service.getByIndex(idx);
+            if (c != null) recordMenu(c);
         } catch (NumberFormatException ignored) {}
     }
 
-
-    public void remove() {
-        list();
-        System.out.print("Select a record: ");
-        int idx = Integer.parseInt(sc.nextLine());
-        service.remove(idx);
-        System.out.println("The record removed!");
-    }
-
-    public void edit() {
-        list();
-        System.out.print("Select a record: ");
-        int idx = Integer.parseInt(sc.nextLine());
-        Contact c = service.getByIndex(idx);
-        editRecord(c);
-    }
+    // =========================
+    // COUNT
+    // =========================
 
     public void count() {
         System.out.println("The Phone Book has " + service.count() + " records.");
     }
 
-    // ----------------- NEW: SEARCH -------------------
+    // =========================
+    // SEARCH
+    // =========================
+
     public void search() {
-        System.out.println("** write back to go back **");
 
         while (true) {
             System.out.print("Enter search query: ");
             String query = sc.nextLine();
 
-            //go back
-            if (query.equalsIgnoreCase("back")) {
-                return;
-            }
-
             List<Contact> results = service.search(query);
-            if (results.isEmpty()) {
-                System.out.println("No results found.");
-            } else {
-                System.out.println("Found " + results.size() + " result(s):");
-                for (int i = 0; i < results.size(); i++) {
-                    System.out.println((i + 1) + ". " + results.get(i).getTitle());
-                }
 
-                System.out.print("[search] Enter action ([number], back, again): ");
-                String action = sc.nextLine();
+            System.out.println("Found " + results.size() + " result(s):");
 
-                if (action.equalsIgnoreCase("back")) return;
-                else if (action.equalsIgnoreCase("again")) continue;
-                else {
-                    try {
-                        int idx = Integer.parseInt(action);
-                        if (idx >= 1 && idx <= results.size()) recordMenu(results.get(idx - 1));
-                    } catch (NumberFormatException ignored) {}
-                }
+            for (int i = 0; i < results.size(); i++) {
+                System.out.println((i + 1) + ". " + results.get(i).getTitle());
             }
+
+            System.out.print("[search] Enter action ([number], back, again): ");
+            String action = sc.nextLine();
+
+            if (action.equalsIgnoreCase("back")) return;
+            if (action.equalsIgnoreCase("again")) continue;
+
+            try {
+                int idx = Integer.parseInt(action);
+                if (idx >= 1 && idx <= results.size()) {
+                    recordMenu(results.get(idx - 1));
+                }
+            } catch (NumberFormatException ignored) {}
         }
     }
 
-    // ----------------- RECORD MENU -------------------
+    // =========================
+    // RECORD MENU
+    // =========================
+
     private void recordMenu(Contact c) {
+
         while (true) {
             c.printInfo();
-            System.out.print("[record] Enter action (edit, delete, back): ");
+
+            System.out.print("[record] Enter action (edit, delete, menu): ");
             String action = sc.nextLine();
 
             if (action.equalsIgnoreCase("edit")) {
                 editRecord(c);
             } else if (action.equalsIgnoreCase("delete")) {
-                service.removeByObject(c);
+                service.remove(service.list().indexOf(c) + 1);
                 System.out.println("The record removed!");
                 return;
-            } else if (action.equalsIgnoreCase("back")) return;
+            } else if (action.equalsIgnoreCase("menu")) {
+                return;
+            }
         }
     }
 
+    // =========================
+    // EDIT (Fully Polymorphic)
+    // =========================
+
     private void editRecord(Contact c) {
-        if (c.isPerson()) {
-            Person p = (Person) c;
-            System.out.print("Select a field (name, surname, birth, gender, number): ");
-            String field = sc.nextLine();
-            System.out.print("Enter value: ");
-            String val = sc.nextLine();
 
-            switch (field) {
-                case "name" -> p.setName(val);
-                case "surname" -> p.setSurname(val);
-                case "birth" -> p.setBirthDate(val);
-                case "gender" -> p.setGender(val);
-                case "number" -> service.setNumber(p, val);
-            }
-        } else {
-            Organization o = (Organization) c;
-            System.out.print("Select a field (name, address, number): ");
-            String field = sc.nextLine();
-            System.out.print("Enter value: ");
-            String val = sc.nextLine();
+        System.out.println("Select a field " + c.getEditableFields() + ": ");
+        String field = sc.nextLine();
 
-            switch (field) {
-                case "name" -> o.setOrgName(val);
-                case "address" -> o.setAddress(val);
-                case "number" -> service.setNumber(o, val);
-            }
+        if (!c.getEditableFields().contains(field)) {
+            System.out.println("Invalid field.");
+            return;
         }
+
+        System.out.print("Enter value: ");
+        String value = sc.nextLine();
+
+        if (field.equals("number")) {
+            service.setNumber(c, value);
+        } else {
+            c.setField(field, value);
+        }
+
         System.out.println("Saved");
     }
 }

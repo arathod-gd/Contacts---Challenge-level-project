@@ -16,41 +16,9 @@ public class ContactController {
         String type = sc.nextLine();
 
         if (type.equalsIgnoreCase("person")) {
-            System.out.print("Enter the name: ");
-            String name = sc.nextLine();
-            System.out.print("Enter the surname: ");
-            String surname = sc.nextLine();
-
-            Person p = new Person(name, surname);
-
-            System.out.print("Enter the birth date: ");
-            String birth = sc.nextLine();
-            if (!birth.isBlank()) p.setBirthDate(birth);
-
-            System.out.print("Enter the gender (M, F): ");
-            String gender = sc.nextLine();
-            if (!gender.isBlank()) p.setGender(gender);
-
-            System.out.print("Enter the number: ");
-            String number = sc.nextLine();
-            service.setNumber(p, number);
-
-            service.addPerson(p);
-            System.out.println("The record added.");
+            service.addPerson(sc);
         } else if (type.equalsIgnoreCase("organization")) {
-            System.out.print("Enter the organization name: ");
-            String name = sc.nextLine();
-            System.out.print("Enter the address: ");
-            String address = sc.nextLine();
-
-            Organization o = new Organization(name, address);
-
-            System.out.print("Enter the number: ");
-            String number = sc.nextLine();
-            service.setNumber(o, number);
-
-            service.addOrganization(o);
-            System.out.println("The record added.");
+            service.addOrganization(sc);
         } else {
             System.out.println("Error! choose correct option..");
         }
@@ -115,11 +83,18 @@ public class ContactController {
 
     // ----------------- NEW: SEARCH -------------------
     public void search() {
+        System.out.println("** write back to go back **");
+
         while (true) {
             System.out.print("Enter search query: ");
             String query = sc.nextLine();
-            List<Contact> results = service.search(query);
 
+            //go back
+            if (query.equalsIgnoreCase("back")) {
+                return;
+            }
+
+            List<Contact> results = service.search(query);
             if (results.isEmpty()) {
                 System.out.println("No results found.");
             } else {
@@ -147,7 +122,7 @@ public class ContactController {
     private void recordMenu(Contact c) {
         while (true) {
             c.printInfo();
-            System.out.print("[record] Enter action (edit, delete, menu): ");
+            System.out.print("[record] Enter action (edit, delete, back): ");
             String action = sc.nextLine();
 
             if (action.equalsIgnoreCase("edit")) {
@@ -156,7 +131,7 @@ public class ContactController {
                 service.removeByObject(c);
                 System.out.println("The record removed!");
                 return;
-            } else if (action.equalsIgnoreCase("menu")) return;
+            } else if (action.equalsIgnoreCase("back")) return;
         }
     }
 
